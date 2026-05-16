@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguridad Industrial TCE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased p-4">
+
+  <main class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-4">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 text-center border-b pb-2">Registro de Condición Insegura</h2>
+    
+    <form id="formReporte" onsubmit="enviarDatos(event)" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Área o Zona de Planta:</label>
+        <select id="area" required class="mt-1 block w-full p-2 border rounded-md bg-gray-50">
+          <option value="">-- Selecciona Área --</option>
+          <option value="Almacén Principal">Almacén Principal</option>
+          <option value="Taller de Mantenimiento">Taller de Mantenimiento</option>
+          <option value="Línea de Producción 1">Línea de Producción 1</option>
+          <option value="Línea de Producción 2">Línea de Producción 2</option>
+          <option value="Patios y Accesos">Patios y Accesos</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Nivel de Riesgo:</label>
+        <select id="riesgo" required class="mt-1 block w-full p-2 border rounded-md bg-gray-50">
+          <option value="">-- Selecciona Nivel --</option>
+          <option value="Bajo">🟢 Bajo (Planificable)</option>
+          <option value="Medio">🟡 Medio (Esta semana)</option>
+          <option value="Alto">🔴 Alto (Peligro Inminente)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Descripción Breve:</label>
+        <textarea id="descripcion" maxlength="200" required rows="3" placeholder="Ej: Cable expuesto..." class="mt-1 block w-full p-2 border rounded-md bg-gray-50 text-sm"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Evidencia Fotográfica:</label>
+        <input type="file" id="foto" accept="image/*" capture="environment" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700">
+      </div>
+
+      <div class="flex items-center">
+        <input type="checkbox" id="anonimo" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+        <label for="anonimo" class="ml-2 block text-sm text-gray-900 font-medium">Reporte Anónimo</label>
+      </div>
+
+      <button type="submit" id="btnEnviar" class="w-full bg-blue-950 text-white font-bold p-3 rounded-md shadow hover:bg-blue-900 transition-colors">
+        🚀 Enviar Reporte
+      </button>
+    </form>
+  </main>
+
+  <script {external}>
+    // REEMPLAZA ESTO CON TU URL DE APPS SCRIPT (LA QUE TERMINA EN /exec)
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySfTkzHLgciHZHf3-uh_4r_rfp1YIldRCVnUQ_tyEC0DAnoF20oFd31Bly-xDEm5wP/exec";
+
+    function enviarDatos(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnEnviar");
+      btn.disabled = true;
+      btn.innerText = "Subiendo archivo y enviando...";
+
+      const fileInput = document.getElementById("foto");
+      const file = fileInput.files[0];
+
+      const payload = {
+        area: document.getElementById("area").value,
+        riesgo: document.getElementById("riesgo").value,
+        descripcion: document.getElementById("descripcion").value,
+        anonimo: document.getElementById("anonimo").checked ? "Sí" : "No",
+        fotoBase64: "",
+        fotoNombre: ""
+      };
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          payload.fotoBase64 = reader.result;
+          payload.fotoNombre = "Riesgo_" + Date.now() + ".jpg";
+          enviarAFormulario(payload);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        enviarAFormulario(payload);
+      }
+    }
+
+    function enviarAFormulario(datos) {
+      const btn = document.getElementById("btnEnviar");
+      
+      // Enviamos los datos mediante un FETCH limpio a Google Sheets
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", // Evita problemas de políticas de seguridad entre servidores
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      })
+      .then(() => {
+        alert("¡Reporte enviado exitosamente!");
+        document.getElementById("formReporte").reset();
+        btn.disabled = false;
+        btn.innerText = "🚀 Enviar Reporte";
+      })
+      .catch(err => {
+        alert("Error de red: " + err);
+        btn.disabled = false;
+        btn.innerText = "🚀 Enviar Reporte";
+      });
+    }
+  </script>
+</body>
+</html>
